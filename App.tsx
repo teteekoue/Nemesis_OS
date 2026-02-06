@@ -1,13 +1,13 @@
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import LoginScreen from './components/LoginScreen';
-import Desktop from './components/Desktop';
-import Taskbar from './components/Taskbar';
-import StartMenu from './components/StartMenu';
-import WindowManager from './components/WindowManager';
-import NotificationCenter from './components/NotificationCenter';
-import { WindowState, AppId, Notification } from './types';
-import { APPS } from './constants';
+import React, { useState, useEffect, useCallback } from 'react';
+import LoginScreen from './components/LoginScreen.tsx';
+import Desktop from './components/Desktop.tsx';
+import Taskbar from './components/Taskbar.tsx';
+import StartMenu from './components/StartMenu.tsx';
+import WindowManager from './components/WindowManager.tsx';
+import NotificationCenter from './components/NotificationCenter.tsx';
+import { WindowState, AppId, Notification } from './types.ts';
+import { APPS } from './constants.tsx';
 
 const App: React.FC = () => {
   const [isBooting, setIsBooting] = useState(true);

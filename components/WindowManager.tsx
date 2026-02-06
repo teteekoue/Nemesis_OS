@@ -1,14 +1,14 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { WindowState } from '../types';
-import { X, Minus, Square, Copy } from 'lucide-react';
-import { APPS } from '../constants';
+import { WindowState } from '../types.ts';
+import { X, Minus, Square } from 'lucide-react';
+import { APPS } from '../constants.tsx';
 
-// App specific components (Simplified for demo)
-import FileNexus from './apps/FileNexus';
-import NemeDocs from './apps/NemeDocs';
-import NemeTerm from './apps/NemeTerm';
-import NemeCalc from './apps/NemeCalc';
+// App specific components
+import FileNexus from './apps/FileNexus.tsx';
+import NemeDocs from './apps/NemeDocs.tsx';
+import NemeTerm from './apps/NemeTerm.tsx';
+import NemeCalc from './apps/NemeCalc.tsx';
 
 interface WindowManagerProps {
   windows: WindowState[];
@@ -117,6 +117,7 @@ const Window: React.FC<WindowProps> = ({
     : { top: window.y, left: window.x, width: window.width, height: window.height, zIndex: window.zIndex };
 
   const renderContent = () => {
+    if (!appMetadata) return null;
     switch(window.appId) {
       case 'filenexus': return <FileNexus />;
       case 'nemodocs': return <NemeDocs />;
