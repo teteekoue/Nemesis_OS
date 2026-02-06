@@ -1,0 +1,8 @@
+{
+  "name": "Nemesis OS",
+  "description": "A minimalist and elegant cyberpunk web-based operating system with integrated productivity apps and a virtual file system.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
