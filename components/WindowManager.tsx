@@ -80,7 +80,10 @@ const Window: React.FC<WindowProps> = ({
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging && !window.isMaximized) {
-        onUpdatePosition(e.clientX - dragOffset.x, e.clientY - dragOffset.y);
+        // Constraints to keep window within viewport
+        const newX = Math.max(-window.width + 100, Math.min(window.innerWidth - 100, e.clientX - dragOffset.x));
+        const newY = Math.max(0, Math.min(window.innerHeight - 60, e.clientY - dragOffset.y));
+        onUpdatePosition(newX, newY);
       }
     };
 
@@ -97,7 +100,7 @@ const Window: React.FC<WindowProps> = ({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, dragOffset, window.isMaximized, onUpdatePosition]);
+  }, [isDragging, dragOffset, window.isMaximized, window.width, onUpdatePosition]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     onFocus();
@@ -124,10 +127,10 @@ const Window: React.FC<WindowProps> = ({
       case 'nemeterm': return <NemeTerm />;
       case 'nemecalc': return <NemeCalc />;
       default: return (
-        <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+        <div className="flex flex-col items-center justify-center h-full p-8 text-center bg-black/20">
           <appMetadata.icon className="w-16 h-16 mb-4 opacity-20" style={{ color: appMetadata.color }} />
-          <h2 className="text-xl font-bold text-white/40">{appMetadata.name}</h2>
-          <p className="text-sm text-gray-500 mt-2">APPLICATION_MODULE_PENDING_IMPLEMENTATION</p>
+          <h2 className="text-xl font-bold text-white/40 uppercase tracking-widest">{appMetadata.name}</h2>
+          <p className="text-xs text-gray-600 mt-2 font-mono">ENCRYPTED_MODULE_LOAD_PENDING</p>
         </div>
       );
     }
@@ -138,26 +141,26 @@ const Window: React.FC<WindowProps> = ({
       ref={windowRef}
       onMouseDown={handleMouseDown}
       style={style}
-      className={`absolute glass rounded-xl flex flex-col pointer-events-auto overflow-hidden border transition-all duration-300 ${
-        isActive ? 'neon-border-cyan ring-1 ring-[#00D4FF]/20' : 'border-white/10 opacity-90'
-      } ${window.isMaximized ? 'rounded-none border-x-0 border-t-0' : 'shadow-2xl'}`}
+      className={`absolute glass rounded-xl flex flex-col pointer-events-auto overflow-hidden border transition-shadow duration-300 ${
+        isActive ? 'neon-border-cyan ring-1 ring-[#00D4FF]/20 shadow-[0_0_40px_rgba(0,212,255,0.15)]' : 'border-white/10 opacity-95 shadow-xl'
+      } ${window.isMaximized ? 'rounded-none border-x-0 border-t-0' : ''}`}
     >
       {/* Titlebar */}
-      <div className="window-titlebar h-10 bg-black/40 flex items-center justify-between px-3 cursor-default select-none border-b border-white/5">
-        <div className="flex items-center space-x-2">
-          {appMetadata && <appMetadata.icon className="w-4 h-4" style={{ color: appMetadata.color }} />}
-          <span className={`text-[11px] font-bold tracking-wider ${isActive ? 'glow-text-cyan' : 'text-gray-400'}`}>
-            {window.title.toUpperCase()}
+      <div className="window-titlebar h-10 bg-black/60 flex items-center justify-between px-3 cursor-default select-none border-b border-white/5 backdrop-blur-md">
+        <div className="flex items-center space-x-2 overflow-hidden">
+          {appMetadata && <appMetadata.icon className="w-4 h-4 shrink-0" style={{ color: appMetadata.color }} />}
+          <span className={`text-[10px] font-black tracking-widest uppercase truncate ${isActive ? 'glow-text-cyan text-[#00D4FF]' : 'text-gray-500'}`}>
+            {window.title}
           </span>
         </div>
-        <div className="flex items-center space-x-1">
-          <button onClick={(e) => { e.stopPropagation(); onMinimize(); }} className="p-1.5 hover:bg-white/10 rounded transition-colors text-gray-400 hover:text-white">
+        <div className="flex items-center space-x-1 shrink-0">
+          <button onClick={(e) => { e.stopPropagation(); onMinimize(); }} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-gray-500 hover:text-white">
             <Minus className="w-3.5 h-3.5" />
           </button>
-          <button onClick={(e) => { e.stopPropagation(); onMaximize(); }} className="p-1.5 hover:bg-white/10 rounded transition-colors text-gray-400 hover:text-white">
+          <button onClick={(e) => { e.stopPropagation(); onMaximize(); }} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-gray-500 hover:text-white">
             <Square className="w-3.5 h-3.5" />
           </button>
-          <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="p-1.5 hover:bg-red-500/80 rounded transition-colors text-gray-400 hover:text-white group">
+          <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="p-1.5 hover:bg-red-500/80 rounded-lg transition-colors text-gray-500 hover:text-white">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -168,10 +171,10 @@ const Window: React.FC<WindowProps> = ({
         {renderContent()}
       </div>
 
-      {/* Resize Handle - Only show when not maximized */}
+      {/* Resize Handle - Improved for mobile/tablet */}
       {!window.isMaximized && (
         <div 
-          className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize"
+          className="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize z-50 flex items-end justify-end p-0.5"
           onMouseDown={(e) => {
             e.preventDefault();
             const startX = e.clientX;
@@ -180,10 +183,9 @@ const Window: React.FC<WindowProps> = ({
             const startHeight = window.height;
 
             const handleResize = (moveEvent: MouseEvent) => {
-              onUpdateSize(
-                Math.max(400, startWidth + (moveEvent.clientX - startX)),
-                Math.max(300, startHeight + (moveEvent.clientY - startY))
-              );
+              const newW = Math.max(300, Math.min(window.innerWidth - window.x, startWidth + (moveEvent.clientX - startX)));
+              const newH = Math.max(200, Math.min(window.innerHeight - window.y - 60, startHeight + (moveEvent.clientY - startY)));
+              onUpdateSize(newW, newH);
             };
 
             const stopResize = () => {
@@ -194,7 +196,9 @@ const Window: React.FC<WindowProps> = ({
             window.addEventListener('mousemove', handleResize);
             window.addEventListener('mouseup', stopResize);
           }}
-        />
+        >
+           <div className="w-2 h-2 border-r-2 border-b-2 border-white/20 rounded-br-sm" />
+        </div>
       )}
     </div>
   );
