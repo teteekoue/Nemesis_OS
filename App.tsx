@@ -48,18 +48,22 @@ const App: React.FC = () => {
       return;
     }
 
+    const isMobile = window.innerWidth < 768;
+    const windowWidth = isMobile ? window.innerWidth * 0.95 : Math.min(800, window.innerWidth - 100);
+    const windowHeight = isMobile ? (window.innerHeight - 100) : 600;
+    
     const newWindow: WindowState = {
       id: Math.random().toString(36).substr(2, 9),
       appId,
       title: app.name,
       isOpen: true,
       isMinimized: false,
-      isMaximized: false,
+      isMaximized: isMobile, // Start maximized on mobile
       zIndex: windows.length + 10,
-      x: 100 + (windows.length * 40),
-      y: 100 + (windows.length * 40),
-      width: 800,
-      height: 600
+      x: isMobile ? (window.innerWidth - windowWidth) / 2 : 100 + (windows.length * 40) % 200,
+      y: isMobile ? 20 : 100 + (windows.length * 40) % 200,
+      width: windowWidth,
+      height: windowHeight
     };
 
     setWindows(prev => [...prev, newWindow]);
@@ -91,13 +95,13 @@ const App: React.FC = () => {
 
   if (isBooting) {
     return (
-      <div className="fixed inset-0 bg-[#0A0A0F] flex flex-col items-center justify-center space-y-8">
-        <div className="w-24 h-24 border-4 border-[#6C00FF] rounded-lg animate-pulse flex items-center justify-center">
-           <svg className="w-16 h-16 text-[#00D4FF]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <div className="fixed inset-0 bg-[#0A0A0F] flex flex-col items-center justify-center space-y-8 p-4">
+        <div className="w-20 h-20 md:w-24 md:h-24 border-4 border-[#6C00FF] rounded-lg animate-pulse flex items-center justify-center">
+           <svg className="w-12 h-12 md:w-16 md:h-16 text-[#00D4FF]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
            </svg>
         </div>
-        <div className="text-xl font-bold tracking-widest text-[#00D4FF] animate-pulse">NEMESIS OS INITIALIZING...</div>
+        <div className="text-sm md:text-xl font-bold tracking-[0.2em] md:tracking-widest text-[#00D4FF] animate-pulse text-center">NEMESIS_OS_INITIALIZING...</div>
       </div>
     );
   }
@@ -126,7 +130,12 @@ const App: React.FC = () => {
         onFocus={focusWindow}
         onMinimize={minimizeWindow}
         onMaximize={toggleMaximizeWindow}
-        onUpdatePosition={(id, x, y) => setWindows(prev => prev.map(w => w.id === id ? { ...w, x, y } : w))}
+        onUpdatePosition={(id, x, y) => {
+          // Keep windows within viewport bounds roughly
+          const safeX = Math.max(-200, Math.min(window.innerWidth - 100, x));
+          const safeY = Math.max(0, Math.min(window.innerHeight - 100, y));
+          setWindows(prev => prev.map(w => w.id === id ? { ...w, x: safeX, y: safeY } : w))
+        }}
         onUpdateSize={(id, width, height) => setWindows(prev => prev.map(w => w.id === id ? { ...w, width, height } : w))}
       />
 
